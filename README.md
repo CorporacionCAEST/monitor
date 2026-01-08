@@ -29,8 +29,6 @@ Por defecto el monitor consulta:
 2. Asegurate de tener un archivo `index.html`.
 3. Abrilo en el navegador (doble click) o servilo con un servidor local.
 
-Opcional (servidor local rápido con Python):
-
 ---
 
 ## 🔒 Autor
