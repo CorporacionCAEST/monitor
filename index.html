@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Oracle Health Monitor</title>
+
+<style>
+  :root{
+    --bg:#000;
+    --panel:#0b0b0b;
+    --panel2:#111;
+    --border:#1f1f1f;
+    --text:#e5e5e5;
+    --muted:#9ca3af;
+    --ok:#22c55e;
+    --err:#ef4444;
+    --warn:#facc15;
+    --cyan:#67e8f9;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background: radial-gradient(circle at top, #111 0%, #000 60%);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color:var(--text);
+    min-height:100vh;
+    padding:24px;
+  }
+
+  .container{ max-width:1100px; margin:auto; }
+  h1{ margin:0 0 10px; font-size:22px; font-weight:600; letter-spacing:.4px; }
+  .sub{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+
+  .toolbar{
+    display:flex; flex-wrap:wrap;
+    gap:12px; align-items:center; margin-bottom:16px;
+  }
+
+  button{
+    background: linear-gradient(180deg, #1f1f1f, #0f0f0f);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    transition: all .2s ease;
+  }
+  button:hover{ background:#1b1b1b; }
+
+  .pill{
+    padding:6px 12px;
+    border-radius:999px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    font-size:12px;
+    color:var(--muted);
+  }
+  .pill.ok{ color:var(--ok); border-color:#1d3b2a; }
+  .pill.err{ color:var(--err); border-color:#3b1d1d; }
+  .pill.warn{ color:var(--warn); border-color:#3b3410; }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:14px;
+  }
+
+  .card{
+    background: linear-gradient(180deg, #111, #070707);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  }
+
+  .titleRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .card h2{
+    margin:0;
+    font-size:14px;
+    font-weight:600;
+    color:#d1d5db;
+    letter-spacing:.3px;
+  }
+
+  /* Default PRE (fallback) */
+  pre{
+    margin:0;
+    white-space:pre-wrap;
+    word-break:break-word;
+    font-size:13px;
+    line-height:1.6;
+    color:#a7f3d0;
+  }
+
+  /* ✅ JSON syntax highlighting (Respuesta actual) */
+  pre.json {
+    color: var(--text); /* base */
+  }
+  .json-key { color:#60a5fa; }       /* azul para keys */
+  .json-string { color:#22c55e; }    /* verde para strings */
+  .json-number { color:#facc15; }    /* amarillo para números */
+  .json-boolean { color:#a78bfa; }   /* morado para true/false */
+  .json-null { color:#9ca3af; }      /* gris para null */
+
+  /* Historial */
+  .historyHeader{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+
+  .historyTools{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .smallBtn{
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:12px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    overflow:hidden;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:#050505;
+  }
+
+  thead th{
+    text-align:left;
+    font-size:12px;
+    color:#cbd5e1;
+    background:#0c0c0c;
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+  }
+
+  tbody td{
+    padding:10px 12px;
+    font-size:12px;
+    color:#d1d5db;
+    border-bottom:1px solid #121212;
+    vertical-align:top;
+  }
+
+  tbody tr:last-child td{ border-bottom:none; }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:3px 10px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:#0a0a0a;
+    font-size:12px;
+    line-height:1.4;
+    white-space:nowrap;
+  }
+  .badge.ok{ color:var(--ok); border-color:#1d3b2a; }
+  .badge.err{ color:var(--err); border-color:#3b1d1d; }
+  .badge.warn{ color:var(--warn); border-color:#3b3410; }
+
+  .monoMuted{ color:var(--muted); }
+  .preview{ color:#93c5fd; max-width: 620px; }
+  .latency{ color: var(--cyan); white-space:nowrap; }
+
+  footer{
+    margin-top:14px;
+    font-size:11px;
+    color:var(--muted);
+    opacity:.75;
+    text-align: center;
+  }
+
+  select {
+    background: #0a0a0a;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    outline: none;
+  }
+
+  select:hover {
+    border-color: #2a2a2a;
+  }
+
+  select option {
+    background: #000;
+  }
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🩺 CAEST Oracle Health Monitor</h1>
+    <div class="sub">Consulta automática al endpoint para ver el estado sin refrescar.</div>
+
+    <div class="toolbar">
+      <button id="toggle">Iniciar monitoreo</button>
+      <span class="pill" id="status">detenido</span>
+
+      <label class="pill">
+        intervalo:
+        <select id="intervalSelect">
+          <option value="1000">1s</option>
+          <option value="5000">5s</option>
+          <option value="10000">10s</option>
+          <option value="30000">30s</option>
+          <option value="60000">1m</option>
+        </select>
+      </label>
+
+      <span class="pill">historial: <b id="historyCount">0</b></span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="titleRow">
+          <h2>Respuesta actual</h2>
+          <span class="pill monoMuted" id="nowMeta">—</span>
+        </div>
+        <!-- ✅ se mantiene PRE, pero ahora se renderiza con colores -->
+        <pre id="out" class="json">{}</pre>
+      </div>
+
+      <div class="card">
+        <div class="historyHeader">
+          <h2 style="margin:0;">Historial (últimos 20)</h2>
+          <div class="historyTools">
+            <button class="smallBtn" id="clear">Limpiar historial</button>
+          </div>
+        </div>
+
+        <div style="max-height: 360px; overflow:auto; border-radius:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">Hora</th>
+                <th style="width:120px;">Estado</th>
+                <th style="width:110px;">Latencia</th>
+                <th>Preview</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="4" class="monoMuted">Sin datos aún.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Design by CAEST TI Department © <span id="year"></span>
+    </footer>
+  </div>
+
+<script>
+  const URL = "https://servicios.corporacioncaest.com/caest/global/v1/health/oracle";
+  let INTERVAL_MS = 1000;
+  const HISTORY_LIMIT = 20;
+
+  let timer = null;
+  let running = false;
+  let history = [];
+
+  const out = document.getElementById("out");
+  const status = document.getElementById("status");
+  const btn = document.getElementById("toggle");
+  const nowMeta = document.getElementById("nowMeta");
+  const historyBody = document.getElementById("historyBody");
+  const historyCount = document.getElementById("historyCount");
+  const clearBtn = document.getElementById("clear");
+  const intervalSelect = document.getElementById("intervalSelect");
+
+  intervalSelect.value = INTERVAL_MS;
+
+  // ✅ JSON syntax highlighting
+  function syntaxHighlight(json) {
+    if (typeof json !== "string") {
+      json = JSON.stringify(json, null, 2);
+    }
+
+    json = json
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    return json.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false|null)\b|\b\d+(\.\d+)?\b)/g,
+      match => {
+        let cls = "json-number";
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? "json-key" : "json-string";
+        } else if (/true|false/.test(match)) {
+          cls = "json-boolean";
+        } else if (/null/.test(match)) {
+          cls = "json-null";
+        }
+        return `<span class="${cls}">${match}</span>`;
+      }
+    );
+  }
+
+  function safePreview(objOrText) {
+    try {
+      const s = typeof objOrText === "string" ? objOrText : JSON.stringify(objOrText);
+      return s.length > 140 ? s.slice(0, 140) + "…" : s;
+    } catch {
+      return "[unprintable]";
+    }
+  }
+
+  function badgeClassForStatus(httpStatus) {
+    if (httpStatus >= 200 && httpStatus < 300) return "badge ok";
+    if (httpStatus >= 300 && httpStatus < 500) return "badge warn";
+    return "badge err";
+  }
+
+  function renderHistory() {
+    historyCount.textContent = String(history.length);
+
+    if (!history.length) {
+      historyBody.innerHTML = `<tr><td colspan="4" class="monoMuted">Sin datos aún.</td></tr>`;
+      return;
+    }
+
+    historyBody.innerHTML = history.map(item => `
+      <tr>
+        <td class="monoMuted">${item.time}</td>
+        <td><span class="${badgeClassForStatus(item.status)}">HTTP ${item.status}</span></td>
+        <td class="latency">${item.ms} ms</td>
+        <td class="preview">${item.preview}</td>
+      </tr>
+    `).join("");
+  }
+
+  async function tick() {
+    const started = performance.now();
+    const time = new Date().toLocaleTimeString();
+
+    try {
+      status.className = "pill warn";
+      status.textContent = "consultando…";
+
+      const res = await fetch(URL, { cache: "no-store" });
+      const text = await res.text();
+
+      let data;
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+      const elapsed = Math.round(performance.now() - started);
+
+      // ✅ UI actual con colores (syntax highlight)
+      out.innerHTML = syntaxHighlight(data);
+      nowMeta.textContent = `${time} · ${elapsed}ms`;
+      status.textContent = `HTTP ${res.status} · ${time}`;
+      status.className = res.ok ? "pill ok" : "pill err";
+
+      // Guardar en historial (lo más nuevo arriba)
+      history.unshift({
+        time,
+        status: res.status,
+        ms: elapsed,
+        preview: safePreview(data)
+      });
+
+      if (history.length > HISTORY_LIMIT) history = history.slice(0, HISTORY_LIMIT);
+      renderHistory();
+
+    } catch (e) {
+      const elapsed = Math.round(performance.now() - started);
+
+      status.textContent = "error de conexión";
+      status.className = "pill err";
+      nowMeta.textContent = `${time} · ${elapsed}ms`;
+
+      // ✅ Mostrar error en el área actual (sin colores, pero seguro)
+      out.textContent = String(e);
+
+      history.unshift({
+        time,
+        status: 0,
+        ms: elapsed,
+        preview: safePreview(String(e))
+      });
+
+      if (history.length > HISTORY_LIMIT) history = history.slice(0, HISTORY_LIMIT);
+      renderHistory();
+    }
+  }
+
+  function start() {
+    if (timer) return;
+    running = true;
+    btn.textContent = "Detener monitoreo";
+    tick();
+    timer = setInterval(tick, INTERVAL_MS);
+  }
+
+  function stop() {
+    running = false;
+    btn.textContent = "Iniciar monitoreo";
+    status.textContent = "detenido";
+    status.className = "pill";
+    nowMeta.textContent = "—";
+    clearInterval(timer);
+    timer = null;
+  }
+
+  btn.addEventListener("click", () => running ? stop() : start());
+
+  clearBtn.addEventListener("click", () => {
+    history = [];
+    renderHistory();
+  });
+
+  intervalSelect.addEventListener("change", () => {
+    INTERVAL_MS = Number(intervalSelect.value);
+    if (running) {
+      clearInterval(timer);
+      timer = setInterval(tick, INTERVAL_MS);
+    }
+  });
+
+  renderHistory();
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
